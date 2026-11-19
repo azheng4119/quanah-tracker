@@ -103,14 +103,15 @@ button{font:inherit;color:inherit}
 .diff[aria-pressed="true"]{background:var(--done-bg);border-color:transparent;color:var(--done-ink)}
 .diff[aria-pressed="true"] span{color:var(--done-ink)}
 .skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
-.skill{--rk:var(--line);background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--rk);border-radius:12px;padding:12px;display:grid;gap:8px}
+.skill{--rk:var(--line);min-width:0;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--rk);border-radius:12px;padding:12px;display:grid;gap:8px}
 .skill[data-rank="Normal"]{--rk:#9AA3B8}.skill[data-rank="Rare"]{--rk:#3D8BFF}.skill[data-rank="Epic"]{--rk:#9B5CF6}.skill[data-rank="Unique"]{--rk:#E0A400}.skill[data-rank="Legendary"]{--rk:#2FBF71}
-.skill .row{display:flex;gap:6px;align-items:center}
-.skill input[type=text],.skill select{height:36px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;padding:0 8px;min-width:0}
+.skill .row{display:flex;gap:6px;align-items:center;min-width:0}
+.skill .row[hidden]{display:none}
+.skill input[type=text],.skill select{width:100%;text-overflow:ellipsis;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;padding:0 8px;min-width:0}
 .skill input[type=text]{flex:1}
 .skill select{flex:1}
 .skill .lbl{font-size:.88rem;color:var(--muted);flex:none;margin-right:4px}
-.skill .stepper{margin-top:0;flex:1}
+.skill .stepper{margin-top:0;flex:1;min-width:0}
 .skill .stepper button{width:34px;height:34px}
 .skill .stepper input{height:34px;font-size:1.05rem}
 .inherit{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted);cursor:pointer}
