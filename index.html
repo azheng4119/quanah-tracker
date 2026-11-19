@@ -102,6 +102,20 @@ button{font:inherit;color:inherit}
 .diff span{display:block;font-size:.75rem;color:var(--muted)}
 .diff[aria-pressed="true"]{background:var(--done-bg);border-color:transparent;color:var(--done-ink)}
 .diff[aria-pressed="true"] span{color:var(--done-ink)}
+.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.skill{--rk:var(--line);background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--rk);border-radius:12px;padding:12px;display:grid;gap:8px}
+.skill[data-rank="Normal"]{--rk:#9AA3B8}.skill[data-rank="Rare"]{--rk:#3D8BFF}.skill[data-rank="Epic"]{--rk:#9B5CF6}.skill[data-rank="Unique"]{--rk:#E0A400}.skill[data-rank="Legendary"]{--rk:#2FBF71}
+.skill .row{display:flex;gap:6px;align-items:center}
+.skill input[type=text],.skill select{height:36px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;padding:0 8px;min-width:0}
+.skill input[type=text]{flex:1}
+.skill select{flex:1}
+.skill .lbl{font-size:.88rem;color:var(--muted);flex:none;margin-right:4px}
+.skill .stepper{margin-top:0;flex:1}
+.skill .stepper button{width:34px;height:34px}
+.skill .stepper input{height:34px;font-size:1.05rem}
+.inherit{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted);cursor:pointer}
+.inherit input{width:18px;height:18px;accent-color:var(--violet)}
+.inherit input:disabled+span{opacity:.5}
 .foot{margin-top:36px;color:var(--muted);font-size:.85rem;max-width:72ch}
 @media (max-width:560px){
   .score-meta{grid-template-columns:repeat(3,1fr);width:100%}
@@ -156,6 +170,12 @@ button{font:inherit;color:inherit}
   </div>
 
   <section class="section">
+    <div class="sec-head"><h2>Dimensional Skills</h2><span class="sec-sum" id="sumSkills"></span></div>
+    <p class="sub" style="margin:0 0 10px">You can hold up to 5: pick from the 37 Active skills or the Passive Inspector Acumen. Getting a duplicate raises that skill’s level. Tick “Keep on death” for skills you picked with Skill Inheritance; you earn a pick at Inspector Lv. 50, 80 and 100.</p>
+    <div class="skills" id="skills"></div>
+  </section>
+
+  <section class="section">
     <div class="sec-head"><h2>Inspector Level <span class="tag round">Round</span></h2><span class="sec-sum" id="sumInsp"></span></div>
     <div class="chips" id="chipsInsp"></div>
   </section>
@@ -176,7 +196,7 @@ button{font:inherit;color:inherit}
     <div class="chips" id="chipsSf"></div>
   </section>
 
-  <p class="foot">When you die, your Inspector Level and Battlesim progress reset, and the score from those round missions is lost. Only boss and Star Force missions are kept. “Log a death” resets the level and floor to 0 so the tracker matches your new run. Values come from the Nov 11, 2026 Quanah event notes. Your entries are saved in this browser only.</p>
+  <p class="foot">When you die, your Inspector Level and Battlesim progress reset, and the score from those round missions is lost. Only boss and Star Force missions are kept, plus any Dimensional Skills you chose with Skill Inheritance. “Log a death” resets the Inspector Level and floor to 0 and clears every skill not marked to keep, so the tracker matches your new run. Values come from the Nov 11, 2026 Quanah event notes. Your entries are saved in this browser only.</p>
 </div>
 
 <script>
@@ -203,13 +223,23 @@ button{font:inherit;color:inherit}
     ["Jupiter",[["Normal",2000]]]
   ];
   const GRADES=[[1,0,10],[2,5000,20],[3,10000,40],[4,17500,70],[5,25000,100]];
+  const RANKS=["Normal","Rare","Epic","Unique","Legendary"];
+  const INHERIT_AT=[50,80,100];
+  const ACTIVE_SKILLS=["Inspector’s Leap","Inspector’s Teleport","Inspector’s Warp Bolt","Inspector’s HP Recovery","Inspector’s Thirst","Inspector’s Revenant","Inspector’s Omega Blaster","Inspector’s Superstar Spotlight","Inspector’s Elemental Radiance","Inspector’s Cannon of Mass Destruction","Inspector’s Infinity Blade","Inspector’s Last Stand","Inspector’s Howling Gale","Inspector’s Throwing Star Barrage","Inspector’s Full Metal Barrage","Inspector’s Inferno Sphere","Inspector’s Split Shot","Inspector’s Scroll: Tiger of Songyu","Inspector’s Twin Blades of Time","Inspector’s Land’s Connection","Inspector’s Dragon Burst/Fatal Blitz","Inspector’s Spirit of Rage","Inspector’s Elemental Fury","Inspector’s Irkalla’s Wrath","Inspector’s Chain Arts: Void Strike","Inspector’s Endlessly Starving Beast","Inspector’s Cosmos","Inspector’s Abyssal Lightning","Inspector’s Wild Arrow Blast: Overdrive","Inspector’s Luck of the Draw","Inspector’s Howling Fist","Inspector’s Wailing Heavens","Inspector’s Hakumenkonmou Juubi","Inspector’s Soul Art: The Opened Gate","Inspector’s Beast’s Rage","Inspector’s Stellar XI - Sirius","Inspector’s Destruction of Roan"];
+  const PASSIVE_SKILLS=["Inspector Acumen"];
+  const ACUMEN_STATS=["STR","DEX","INT","LUK","All stats","Max HP","Attack Power","Magic ATT","Critical Rate","Critical Damage","Damage","Ignore Defense","Boss Damage","Buff Skill Duration","Chance to ignore damage when hit","Reduced MP consumption for all skills","HP recovery item and skill efficiency","Mesos Obtained","Item Drop Rate"];
+  const ALL_SKILLS=ACTIVE_SKILLS.concat(PASSIVE_SKILLS);
+  const blankSkill=()=>({name:"",stat:"",rank:"Normal",lvl:1,inherit:false});
   const LIMITS={insp:[0,100],floor:[0,150],sf:[0,30],banked:[0,9999999]};
   const KEY="quanah-dim-tracker-v1";
   const fmt=n=>n.toLocaleString("en-US");
   const $=id=>document.getElementById(id);
 
-  let state={insp:0,floor:0,sf:0,banked:0,bosses:{}};
+  let state={insp:0,floor:0,sf:0,bosses:{},skills:[]};
   try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&typeof s==="object")state=Object.assign(state,s,{bosses:s.bosses||{}});}catch(e){}
+  if(!Array.isArray(state.skills))state.skills=[];
+  state.skills=state.skills.slice(0,5).map(s=>{const b=blankSkill();if(!s||typeof s!=="object")return b;const o=Object.assign(b,s);delete o.type;if(!ALL_SKILLS.includes(o.name)){o.name="";o.inherit=false;}return o;});
+  while(state.skills.length<5)state.skills.push(blankSkill());
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
   // Build meter
@@ -239,6 +269,49 @@ button{font:inherit;color:inherit}
     });
     card.appendChild(row);bossWrap.appendChild(card);
   });
+
+  // Skills UI
+  const skillWrap=$("skills"),skillCards=[];
+  for(let i=0;i<5;i++){
+    const c=document.createElement("div");c.className="skill";
+    c.innerHTML='<div class="row"><select data-f="name" aria-label="Skill slot '+(i+1)+'"><option value="">Slot '+(i+1)+': empty</option>'
+        +'<optgroup label="Active">'+ACTIVE_SKILLS.map(n=>'<option>'+n+'</option>').join("")+'</optgroup>'
+        +'<optgroup label="Passive">'+PASSIVE_SKILLS.map(n=>'<option>'+n+'</option>').join("")+'</optgroup></select></div>'
+      +'<div class="row" data-acumen hidden><select data-f="stat" aria-label="Skill slot '+(i+1)+' Acumen stat"><option value="">Choose the stat it raises</option>'+ACUMEN_STATS.map(n=>'<option>'+n+'</option>').join("")+'</select></div>'
+      +'<div class="row"><span class="lbl">Rank</span><select data-f="rank" aria-label="Skill slot '+(i+1)+' rank">'+RANKS.map(r=>"<option>"+r+"</option>").join("")+'</select></div>'
+      +'<div class="row"><span class="lbl">Skill level</span><div class="stepper"><button type="button" data-d="-1" aria-label="Lower skill level">−</button><input type="number" inputmode="numeric" min="1" max="99" data-f="lvl" aria-label="Skill slot '+(i+1)+' level"><button type="button" data-d="1" aria-label="Raise skill level">+</button></div></div>'
+      +'<label class="inherit"><input type="checkbox" data-f="inherit"><span>Keep on death (Skill Inheritance)</span></label>';
+    const q=f=>c.querySelector('[data-f="'+f+'"]');
+    const upd=()=>{save();renderSkills();};
+    q("name").addEventListener("change",e=>{const s=state.skills[i];s.name=e.target.value;if(!s.name){Object.assign(s,blankSkill());}if(s.name!=="Inspector Acumen")s.stat="";upd();});
+    q("stat").addEventListener("change",e=>{state.skills[i].stat=e.target.value;upd();});
+    q("rank").addEventListener("change",e=>{state.skills[i].rank=e.target.value;upd();});
+    const lv=q("lvl");
+    const setLvl=v=>{v=Math.round(+v);if(!isFinite(v))v=1;state.skills[i].lvl=Math.max(1,Math.min(99,v));};
+    lv.addEventListener("input",()=>{if(lv.value!==""){setLvl(lv.value);upd();}});
+    lv.addEventListener("change",()=>{setLvl(lv.value||1);lv.value=state.skills[i].lvl;upd();});
+    c.querySelectorAll("button[data-d]").forEach(b=>b.addEventListener("click",()=>{setLvl(state.skills[i].lvl+ +b.dataset.d);lv.value=state.skills[i].lvl;upd();}));
+    q("inherit").addEventListener("change",e=>{state.skills[i].inherit=e.target.checked;upd();});
+    skillWrap.appendChild(c);skillCards.push(c);
+  }
+  function renderSkills(){
+    const avail=INHERIT_AT.filter(x=>state.insp>=x).length;
+    const used=state.skills.filter(s=>s.inherit&&s.name.trim()).length;
+    let filled=0;
+    skillCards.forEach((c,i)=>{
+      const s=state.skills[i],has=!!s.name.trim();if(has)filled++;
+      c.dataset.rank=has?s.rank:"";
+      c.querySelector("[data-acumen]").hidden=s.name!=="Inspector Acumen";
+      c.title=has?(PASSIVE_SKILLS.includes(s.name)?"Passive skill":"Active skill"):"";
+      c.querySelectorAll("[data-f]").forEach(el=>{
+        if(document.activeElement===el)return;
+        const f=el.dataset.f;
+        if(f==="inherit"){el.checked=!!s.inherit;el.disabled=!has||(!s.inherit&&used>=avail);}
+        else el.value=s[f];
+      });
+    });
+    $("sumSkills").innerHTML="<b>"+filled+"</b> of 5 slots used, <b>"+Math.floor(state.insp/5)+"</b> skill coupons this run, <b>"+used+"</b> of <b>"+avail+"</b> inheritance picks";
+  }
 
   function chips(el,list,value,label){
     el.innerHTML="";let next=true;
@@ -282,6 +355,7 @@ button{font:inherit;color:inherit}
     $("nextNote").innerHTML=nextG
       ? "<strong>"+fmt(nextG[1]-total)+"</strong> more points to Grade "+nextG[0]+" ("+nextG[2]+" skill refreshes)."
       : "You’ve reached Grade 5, the highest Dimensional Grade.";
+    renderSkills();
   }
 
   function setVal(k,v){
@@ -301,12 +375,14 @@ button{font:inherit;color:inherit}
   function say(t){msg.textContent=t;clearTimeout(msgT);msgT=setTimeout(()=>msg.textContent="",4000);}
   $("logDeath").addEventListener("click",()=>{
     const r=sumList(INSP,state.insp)[0]+sumList(FLOOR,state.floor)[0];
+    let kept=0;
+    state.skills=state.skills.map(s=>{if(s.inherit&&s.name.trim()){kept++;return Object.assign({},s,{inherit:false});}return blankSkill();});
     state.insp=0;state.floor=0;save();render();
-    say("Inspector Level and Battlesim floor reset. "+fmt(r)+" round points lost.");
+    say("Inspector Level and Battlesim floor reset. "+fmt(r)+" round points lost. "+kept+" inherited skill"+(kept===1?"":"s")+" kept.");
   });
   $("resetAll").addEventListener("click",()=>{
-    if(!confirm("Clear Inspector Level, Battlesim floor, Star Force and all boss clears?"))return;
-    state={insp:0,floor:0,sf:0,bosses:{}};save();render();say("Tracker cleared.");
+    if(!confirm("Clear your skills, Inspector Level, Battlesim floor, Star Force and all boss clears?"))return;
+    state={insp:0,floor:0,sf:0,bosses:{},skills:[0,1,2,3,4].map(blankSkill)};save();render();say("Tracker cleared.");
   });
 
   render();
