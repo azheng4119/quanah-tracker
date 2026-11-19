@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quanah Dimensional Mission Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EDF6; --surface:#FFFFFF; --surface-2:#F4F6FB; --ink:#18203D; --muted:#5A6386;
+  --line:#D5DAEA; --violet:#5A48D6; --teal:#0E8FA3; --done-bg:#E7E3FF; --done-ink:#3A2BA8;
+  --round:#0E8FA3; --perm:#5A48D6; --focus:#F0A500;
+  --display:"Chakra Petch","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10132A; --surface:#191E3D; --surface-2:#20264A; --ink:#E6E9F7; --muted:#9BA3C8;
+    --line:#2E3560; --violet:#A397FF; --teal:#43CFE0; --done-bg:#2E2870; --done-ink:#D9D3FF;
+    --round:#43CFE0; --perm:#A397FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10132A; --surface:#191E3D; --surface-2:#20264A; --ink:#E6E9F7; --muted:#9BA3C8;
+  --line:#2E3560; --violet:#A397FF; --teal:#43CFE0; --done-bg:#2E2870; --done-ink:#D9D3FF;
+  --round:#43CFE0; --perm:#A397FF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 56px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15}
+h1{font-size:clamp(1.7rem,4.5vw,2.4rem);font-weight:700;letter-spacing:.01em}
+.sub{color:var(--muted);margin:6px 0 0;max-width:64ch}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* Grade console */
+.console{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 22px 20px;position:relative;overflow:hidden}
+.console::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,var(--teal),var(--violet))}
+.score-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 32px;justify-content:space-between}
+.grade{font-family:var(--display);font-weight:700;font-size:clamp(3.2rem,11vw,5.2rem);line-height:.9;color:var(--violet)}
+.grade small{display:block;font-size:.95rem;font-weight:600;color:var(--muted);letter-spacing:.02em;margin-bottom:4px}
+.score-meta{display:grid;grid-template-columns:repeat(3,auto);gap:4px 28px;text-align:left}
+.score-meta dt{color:var(--muted);font-size:.85rem}
+.score-meta dd{margin:0;font-family:var(--display);font-weight:600;font-size:1.35rem}
+.meter{margin-top:22px;position:relative}
+.track{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.seg{position:relative;height:100%;border-right:2px solid var(--surface)}
+.seg:last-child{border-right:0}
+.seg .fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--teal),var(--violet));transition:width .5s ease}
+.ticks{display:flex;margin-top:6px;font-size:.8rem;color:var(--muted)}
+.ticks span{flex:none}
+.next-note{margin:14px 0 0;color:var(--muted)}
+.next-note strong{color:var(--ink)}
+
+/* Inputs */
+.inputs{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.field{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.field label{display:block;font-weight:700;font-size:.95rem}
+.field .hint{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+.stepper{display:flex;align-items:center;margin-top:10px;gap:6px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);font-size:1.2rem;cursor:pointer;flex:none}
+.stepper button:hover{border-color:var(--violet)}
+.stepper input{width:100%;min-width:0;height:40px;text-align:center;font-family:var(--display);font-weight:600;font-size:1.3rem;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.stepper input::-webkit-inner-spin-button{opacity:.4}
+.actions{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:700}
+.btn.primary{background:var(--violet);border-color:var(--violet);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#10132A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#10132A}}
+.btn:hover{filter:brightness(1.05);border-color:var(--violet)}
+.actions .msg{color:var(--muted);font-size:.9rem}
+
+/* Sections */
+.section{margin-top:28px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px;margin-bottom:10px}
+.sec-head h2{font-size:1.3rem}
+.tag{display:inline-block;font-family:var(--body);font-size:.78rem;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle}
+.tag.round{background:color-mix(in srgb,var(--round) 16%,transparent);color:var(--round)}
+.tag.perm{background:color-mix(in srgb,var(--perm) 16%,transparent);color:var(--perm)}
+.sec-sum{color:var(--muted);font-size:.92rem}
+.sec-sum b{color:var(--ink);font-family:var(--display)}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 9px;line-height:1.25}
+.chip .m{font-weight:700;font-size:.9rem;display:block}
+.chip .p{font-size:.8rem;color:var(--muted)}
+.chip.done{background:var(--done-bg);border-color:transparent;color:var(--done-ink)}
+.chip.done .p{color:var(--done-ink);opacity:.8}
+.chip.next{border:2px dashed var(--violet)}
+.bosses{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px}
+.boss{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.boss h3{font-size:1rem;font-weight:600;margin-bottom:8px}
+.diffs{display:flex;flex-wrap:wrap;gap:6px}
+.diff{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:.85rem;line-height:1.2;text-align:left}
+.diff span{display:block;font-size:.75rem;color:var(--muted)}
+.diff[aria-pressed="true"]{background:var(--done-bg);border-color:transparent;color:var(--done-ink)}
+.diff[aria-pressed="true"] span{color:var(--done-ink)}
+.foot{margin-top:36px;color:var(--muted);font-size:.85rem;max-width:72ch}
+@media (max-width:560px){
+  .score-meta{grid-template-columns:repeat(3,1fr);width:100%}
+  .wrap{padding:20px 14px 48px}
+}
+@media (prefers-reduced-motion:reduce){.seg .fill{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Quanah Dimensional Mission Tracker</h1>
+    <p class="sub">Enter your Inspector Level, highest Battlesim floor and Star Force, then tick the bosses you’ve cleared solo. Your Mission Score and Dimensional Grade update as you go.</p>
+  </header>
+
+  <section class="console" aria-label="Dimensional Grade">
+    <div class="score-row">
+      <div class="grade"><small>Dimensional Grade</small><span id="gradeNum">1</span></div>
+      <dl class="score-meta">
+        <dt>Mission Score</dt><dt>Missions done</dt><dt>Skill refreshes</dt>
+        <dd id="scoreTotal">0</dd><dd id="missionCount">0</dd><dd id="refreshes">10</dd>
+      </dl>
+    </div>
+    <div class="meter">
+      <div class="track" id="track"></div>
+      <div class="ticks" id="ticks"></div>
+    </div>
+    <p class="next-note" id="nextNote"></p>
+  </section>
+
+  <div class="inputs">
+    <div class="field">
+      <label for="insp">Inspector Level</label>
+      <span class="hint">Current run, 1 to 100</span>
+      <div class="stepper"><button type="button" data-step="insp" data-d="-1" aria-label="Lower Inspector Level">−</button><input id="insp" type="number" inputmode="numeric" min="0" max="100"><button type="button" data-step="insp" data-d="1" aria-label="Raise Inspector Level">+</button></div>
+    </div>
+    <div class="field">
+      <label for="floor">Highest Battlesim floor cleared</label>
+      <span class="hint">Current run, up to 150</span>
+      <div class="stepper"><button type="button" data-step="floor" data-d="-1" aria-label="Lower floor">−</button><input id="floor" type="number" inputmode="numeric" min="0" max="150"><button type="button" data-step="floor" data-d="1" aria-label="Raise floor">+</button></div>
+    </div>
+    <div class="field">
+      <label for="sf">Highest Star Force reached</label>
+      <span class="hint">On any one item, up to 30</span>
+      <div class="stepper"><button type="button" data-step="sf" data-d="-1" aria-label="Lower Star Force">−</button><input id="sf" type="number" inputmode="numeric" min="0" max="30"><button type="button" data-step="sf" data-d="1" aria-label="Raise Star Force">+</button></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" type="button" id="logDeath">Log a death</button>
+    <button class="btn" type="button" id="resetAll">Clear everything</button>
+    <span class="msg" id="msg" role="status"></span>
+  </div>
+
+  <section class="section">
+    <div class="sec-head"><h2>Inspector Level <span class="tag round">Round</span></h2><span class="sec-sum" id="sumInsp"></span></div>
+    <div class="chips" id="chipsInsp"></div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head"><h2>Battlesim floors <span class="tag round">Round</span></h2><span class="sec-sum" id="sumFloor"></span></div>
+    <div class="chips" id="chipsFloor"></div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head"><h2>Bosses <span class="tag perm">Permanent</span></h2><span class="sec-sum" id="sumBoss"></span></div>
+    <p class="sub" style="margin:0 0 10px">Only solo clears count. Tap each difficulty you’ve cleared.</p>
+    <div class="bosses" id="bosses"></div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head"><h2>Star Force <span class="tag perm">Permanent</span></h2><span class="sec-sum" id="sumSf"></span></div>
+    <div class="chips" id="chipsSf"></div>
+  </section>
+
+  <p class="foot">When you die, your Inspector Level and Battlesim progress reset, and the score from those round missions is lost. Only boss and Star Force missions are kept. “Log a death” resets the level and floor to 0 so the tracker matches your new run. Values come from the Nov 11, 2026 Quanah event notes. Your entries are saved in this browser only.</p>
+</div>
+
+<script>
+(function(){
+  const INSP=[[5,50],[10,50],[15,100],[20,200],[25,300],[30,400],[35,500],[40,600],[45,700],[50,800],[55,1000],[60,1200],[65,1400],[70,1600],[75,1800],[80,2000],[85,2000],[90,2000],[95,2000],[100,2000]];
+  const FLOOR=[];for(let f=5;f<=150;f+=5)FLOOR.push([f,Math.min(f*20,2000)]);
+  const SF=[[5,50],[8,50],[10,100],[12,100],[15,150],[16,150],[17,150],[18,200],[19,200],[20,300],[21,400],[22,600],[23,900],[24,1200],[25,1200],[26,1200],[27,1500],[28,1800],[29,2000],[30,2000]];
+  const BOSSES=[
+    ["Lotus",[["Normal",50],["Hard",250],["Extreme",1300]]],
+    ["Damien",[["Normal",50],["Hard",250]]],
+    ["Guardian Angel Slime",[["Normal",100],["Chaos",400]]],
+    ["Lucid",[["Easy",100],["Normal",150],["Hard",300]]],
+    ["Will",[["Easy",150],["Normal",200],["Hard",400]]],
+    ["Gloom",[["Normal",200],["Chaos",400]]],
+    ["Darknell",[["Normal",200],["Hard",500]]],
+    ["Verus Hilla",[["Normal",300],["Hard",500]]],
+    ["Chosen Seren",[["Normal",600],["Hard",800],["Extreme",2000]]],
+    ["Kalos the Guardian",[["Easy",800],["Normal",1000],["Chaos",2000],["Extreme",2000]]],
+    ["First Adversary",[["Easy",800],["Normal",1000],["Hard",2000],["Extreme",2000]]],
+    ["Kaling",[["Easy",1000],["Normal",1600],["Hard",2000]]],
+    ["Malefic Star",[["Normal",1300],["Hard",2000]]],
+    ["Limbo",[["Normal",2000],["Hard",2000]]],
+    ["Baldrix",[["Normal",2000],["Hard",2000]]],
+    ["Jupiter",[["Normal",2000]]]
+  ];
+  const GRADES=[[1,0,10],[2,5000,20],[3,10000,40],[4,17500,70],[5,25000,100]];
+  const LIMITS={insp:[0,100],floor:[0,150],sf:[0,30],banked:[0,9999999]};
+  const KEY="quanah-dim-tracker-v1";
+  const fmt=n=>n.toLocaleString("en-US");
+  const $=id=>document.getElementById(id);
+
+  let state={insp:0,floor:0,sf:0,banked:0,bosses:{}};
+  try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&typeof s==="object")state=Object.assign(state,s,{bosses:s.bosses||{}});}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+  // Build meter
+  const track=$("track"),ticks=$("ticks");
+  const MAXS=25000;
+  GRADES.slice(0,4).forEach((g,i)=>{
+    const lo=g[1],hi=GRADES[i+1][1];
+    const seg=document.createElement("div");seg.className="seg";seg.style.width=((hi-lo)/MAXS*100)+"%";
+    seg.innerHTML='<div class="fill" style="width:0"></div>';seg.dataset.lo=lo;seg.dataset.hi=hi;track.appendChild(seg);
+    const t=document.createElement("span");t.style.width=((hi-lo)/MAXS*100)+"%";t.textContent=i===0?"0":fmt(lo);ticks.appendChild(t);
+  });
+  const lastTick=document.createElement("span");lastTick.style.marginLeft="-3em";lastTick.textContent=fmt(MAXS);ticks.appendChild(lastTick);
+
+  // Bosses UI
+  const bossWrap=$("bosses");
+  BOSSES.forEach(([name,diffs])=>{
+    const card=document.createElement("div");card.className="boss";
+    card.innerHTML="<h3>"+name+"</h3>";
+    const row=document.createElement("div");row.className="diffs";
+    diffs.forEach(([d,p])=>{
+      const b=document.createElement("button");b.type="button";b.className="diff";
+      const id=name+"|"+d;b.dataset.id=id;
+      b.innerHTML=d+"<span>"+fmt(p)+"</span>";
+      b.setAttribute("aria-label",name+" "+d+", "+p+" points");
+      b.addEventListener("click",()=>{state.bosses[id]=!state.bosses[id];if(!state.bosses[id])delete state.bosses[id];save();render();});
+      row.appendChild(b);
+    });
+    card.appendChild(row);bossWrap.appendChild(card);
+  });
+
+  function chips(el,list,value,label){
+    el.innerHTML="";let next=true;
+    list.forEach(([m,p])=>{
+      const done=value>=m;const c=document.createElement("div");
+      c.className="chip"+(done?" done":"")+(!done&&next?" next":"");
+      if(!done&&next)next=false;
+      c.innerHTML='<span class="m">'+label(m)+'</span><span class="p">'+fmt(p)+' pts</span>';
+      el.appendChild(c);
+    });
+  }
+  function sumList(list,value){let s=0,n=0;list.forEach(([m,p])=>{if(value>=m){s+=p;n++;}});return [s,n];}
+  const totalOf=l=>l.reduce((a,[,p])=>a+p,0);
+
+  function render(){
+    ["insp","floor","sf"].forEach(k=>{const el=$(k);if(document.activeElement!==el)el.value=state[k];});
+    const [si,ni]=sumList(INSP,state.insp),[sfl,nfl]=sumList(FLOOR,state.floor),[ss,ns]=sumList(SF,state.sf);
+    let sb=0,nb=0,bt=0,bc=0;
+    BOSSES.forEach(([name,diffs])=>diffs.forEach(([d,p])=>{bt+=p;bc++;if(state.bosses[name+"|"+d]){sb+=p;nb++;}}));
+    document.querySelectorAll(".diff").forEach(b=>b.setAttribute("aria-pressed",state.bosses[b.dataset.id]?"true":"false"));
+
+    chips($("chipsInsp"),INSP,state.insp,m=>"Lv. "+m);
+    chips($("chipsFloor"),FLOOR,state.floor,m=>"Floor "+m);
+    chips($("chipsSf"),SF,state.sf,m=>m+" stars");
+    $("sumInsp").innerHTML="<b>"+ni+"</b> of "+INSP.length+" done, <b>"+fmt(si)+"</b> of "+fmt(totalOf(INSP))+" pts";
+    $("sumFloor").innerHTML="<b>"+nfl+"</b> of "+FLOOR.length+" done, <b>"+fmt(sfl)+"</b> of "+fmt(totalOf(FLOOR))+" pts";
+    $("sumSf").innerHTML="<b>"+ns+"</b> of "+SF.length+" done, <b>"+fmt(ss)+"</b> of "+fmt(totalOf(SF))+" pts";
+    $("sumBoss").innerHTML="<b>"+nb+"</b> of "+bc+" done, <b>"+fmt(sb)+"</b> of "+fmt(bt)+" pts";
+
+    const total=si+sfl+ss+sb;
+    let g=GRADES[0];GRADES.forEach(x=>{if(total>=x[1])g=x;});
+    $("gradeNum").textContent=g[0];
+    $("scoreTotal").textContent=fmt(total);
+    $("missionCount").textContent=ni+nfl+ns+nb;
+    $("refreshes").textContent=g[2];
+    track.querySelectorAll(".seg").forEach(seg=>{
+      const lo=+seg.dataset.lo,hi=+seg.dataset.hi;
+      seg.querySelector(".fill").style.width=Math.max(0,Math.min(1,(total-lo)/(hi-lo)))*100+"%";
+    });
+    const nextG=GRADES.find(x=>x[1]>total);
+    $("nextNote").innerHTML=nextG
+      ? "<strong>"+fmt(nextG[1]-total)+"</strong> more points to Grade "+nextG[0]+" ("+nextG[2]+" skill refreshes)."
+      : "You’ve reached Grade 5, the highest Dimensional Grade.";
+  }
+
+  function setVal(k,v){
+    const [lo,hi]=LIMITS[k];v=Math.round(+v);if(!isFinite(v))v=0;
+    state[k]=Math.max(lo,Math.min(hi,v));save();render();
+  }
+  ["insp","floor","sf"].forEach(k=>{
+    const el=$(k);
+    el.addEventListener("input",()=>{if(el.value!=="")setVal(k,el.value);});
+    el.addEventListener("change",()=>{setVal(k,el.value||0);el.value=state[k];});
+  });
+  document.querySelectorAll("[data-step]").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.step;setVal(k,state[k]+ +b.dataset.d);$(k).value=state[k];
+  }));
+
+  const msg=$("msg");let msgT;
+  function say(t){msg.textContent=t;clearTimeout(msgT);msgT=setTimeout(()=>msg.textContent="",4000);}
+  $("logDeath").addEventListener("click",()=>{
+    const r=sumList(INSP,state.insp)[0]+sumList(FLOOR,state.floor)[0];
+    state.insp=0;state.floor=0;save();render();
+    say("Inspector Level and Battlesim floor reset. "+fmt(r)+" round points lost.");
+  });
+  $("resetAll").addEventListener("click",()=>{
+    if(!confirm("Clear Inspector Level, Battlesim floor, Star Force and all boss clears?"))return;
+    state={insp:0,floor:0,sf:0,bosses:{}};save();render();say("Tracker cleared.");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
