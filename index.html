@@ -116,6 +116,10 @@ button{font:inherit;color:inherit}
 .inherit{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted);cursor:pointer}
 .inherit input{width:18px;height:18px;accent-color:var(--violet)}
 .inherit input:disabled+span{opacity:.5}
+.tabs{display:flex;gap:4px;margin-top:22px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;padding:10px 18px;font-family:var(--display);font-weight:600;font-size:1.1rem;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--violet)}
 .foot{margin-top:36px;color:var(--muted);font-size:.85rem;max-width:72ch}
 @media (max-width:560px){
   .score-meta{grid-template-columns:repeat(3,1fr);width:100%}
@@ -128,9 +132,15 @@ button{font:inherit;color:inherit}
 <div class="wrap">
   <header>
     <h1>Quanah Dimensional Mission Tracker</h1>
-    <p class="sub">Enter your Inspector Level, highest Battlesim floor and Star Force, then tick the bosses you’ve cleared solo. Your Mission Score and Dimensional Grade update as you go.</p>
+    <p class="sub">Track your Dimensional Missions and Grade on the Missions tab, and the Dimensional Skills you’re holding on the Skills tab.</p>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Tracker sections">
+    <button type="button" class="tab" role="tab" id="tab-missions" aria-controls="panel-missions" data-view="missions">Missions</button>
+    <button type="button" class="tab" role="tab" id="tab-skills" aria-controls="panel-skills" data-view="skills">Skills</button>
+  </nav>
+
+  <div id="panel-missions" role="tabpanel" aria-labelledby="tab-missions">
   <section class="console" aria-label="Dimensional Grade">
     <div class="score-row">
       <div class="grade"><small>Dimensional Grade</small><span id="gradeNum">1</span></div>
@@ -170,12 +180,6 @@ button{font:inherit;color:inherit}
   </div>
 
   <section class="section">
-    <div class="sec-head"><h2>Dimensional Skills</h2><span class="sec-sum" id="sumSkills"></span></div>
-    <p class="sub" style="margin:0 0 10px">You can hold up to 5: pick from the 37 Active skills or the Passive Inspector Acumen. Getting a duplicate raises that skill’s level. Tick “Keep on death” for skills you picked with Skill Inheritance; you earn a pick at Inspector Lv. 50, 80 and 100.</p>
-    <div class="skills" id="skills"></div>
-  </section>
-
-  <section class="section">
     <div class="sec-head"><h2>Inspector Level <span class="tag round">Round</span></h2><span class="sec-sum" id="sumInsp"></span></div>
     <div class="chips" id="chipsInsp"></div>
   </section>
@@ -197,6 +201,16 @@ button{font:inherit;color:inherit}
   </section>
 
   <p class="foot">When you die, your Inspector Level and Battlesim progress reset, and the score from those round missions is lost. Only boss and Star Force missions are kept, plus any Dimensional Skills you chose with Skill Inheritance. “Log a death” resets the Inspector Level and floor to 0 and clears every skill not marked to keep, so the tracker matches your new run. Values come from the Nov 11, 2026 Quanah event notes. Your entries are saved in this browser only.</p>
+  </div>
+
+  <div id="panel-skills" role="tabpanel" aria-labelledby="tab-skills" hidden>
+  <section class="section" style="margin-top:20px">
+    <div class="sec-head"><h2>Dimensional Skills</h2><span class="sec-sum" id="sumSkills"></span></div>
+    <p class="sub" style="margin:0 0 10px">You can hold up to 5: pick from the 37 Active skills or the Passive Inspector Acumen. Getting a duplicate raises that skill’s level. Tick “Keep on death” for skills you picked with Skill Inheritance; you earn a pick at Inspector Lv. 50, 80 and 100.</p>
+    <div class="skills" id="skills"></div>
+  </section>
+
+  </div>
 </div>
 
 <script>
@@ -310,7 +324,7 @@ button{font:inherit;color:inherit}
         else el.value=s[f];
       });
     });
-    $("sumSkills").innerHTML="<b>"+filled+"</b> of 5 slots used, <b>"+Math.floor(state.insp/5)+"</b> skill coupons this run, <b>"+used+"</b> of <b>"+avail+"</b> inheritance picks";
+    $("sumSkills").innerHTML="Inspector Lv. <b>"+state.insp+"</b>, <b>"+filled+"</b> of 5 slots used, <b>"+Math.floor(state.insp/5)+"</b> skill coupons this run, <b>"+used+"</b> of <b>"+avail+"</b> inheritance picks";
   }
 
   function chips(el,list,value,label){
@@ -384,6 +398,26 @@ button{font:inherit;color:inherit}
     if(!confirm("Clear your skills, Inspector Level, Battlesim floor, Star Force and all boss clears?"))return;
     state={insp:0,floor:0,sf:0,bosses:{},skills:[0,1,2,3,4].map(blankSkill)};save();render();say("Tracker cleared.");
   });
+
+  // Tabs (#missions / #skills)
+  const VIEWS=["missions","skills"];
+  function showView(){
+    const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"missions";
+    VIEWS.forEach(x=>{
+      const t=$("tab-"+x),p=$("panel-"+x),on=x===v;
+      t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;p.hidden=!on;
+    });
+  }
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.addEventListener("click",()=>{if(location.hash!=="#"+t.dataset.view)location.hash=t.dataset.view;else showView();});
+    t.addEventListener("keydown",e=>{
+      if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft")return;
+      const i=VIEWS.indexOf(t.dataset.view),n=VIEWS[(i+(e.key==="ArrowRight"?1:VIEWS.length-1))%VIEWS.length];
+      location.hash=n;$("tab-"+n).focus();
+    });
+  });
+  addEventListener("hashchange",showView);
+  showView();
 
   render();
 })();
