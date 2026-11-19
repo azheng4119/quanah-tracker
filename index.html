@@ -47,7 +47,7 @@ button{font:inherit;color:inherit}
 .score-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 32px;justify-content:space-between}
 .grade{font-family:var(--display);font-weight:700;font-size:clamp(3.2rem,11vw,5.2rem);line-height:.9;color:var(--violet)}
 .grade small{display:block;font-size:.95rem;font-weight:600;color:var(--muted);letter-spacing:.02em;margin-bottom:4px}
-.score-meta{display:grid;grid-template-columns:repeat(3,auto);gap:4px 28px;text-align:left}
+.score-meta{display:grid;grid-template-columns:repeat(4,auto);gap:4px 28px;text-align:left}
 .score-meta dt{color:var(--muted);font-size:.85rem}
 .score-meta dd{margin:0;font-family:var(--display);font-weight:600;font-size:1.35rem}
 .meter{margin-top:22px;position:relative}
@@ -120,9 +120,19 @@ button{font:inherit;color:inherit}
 .tab{border:0;background:none;padding:10px 18px;font-family:var(--display);font-weight:600;font-size:1.1rem;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}
 .tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--violet)}
+.modules{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.module{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px;align-content:start}
+.module h3{font-size:1.15rem}
+.module .eff{margin:0;color:var(--muted);font-size:.9rem}
+.module .eff b{color:var(--ink);font-family:var(--display);font-size:1.05rem}
+.module .stepper{margin-top:0}
+.ups{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.ups li{border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:.88rem;line-height:1.3;display:flex;gap:10px}
+.ups li .lv{font-family:var(--display);font-weight:600;flex:none;width:3.6em}
+.ups li.done{background:var(--done-bg);border-color:transparent;color:var(--done-ink)}
 .foot{margin-top:36px;color:var(--muted);font-size:.85rem;max-width:72ch}
 @media (max-width:560px){
-  .score-meta{grid-template-columns:repeat(3,1fr);width:100%}
+  .score-meta{grid-template-columns:repeat(2,1fr);width:100%}
   .wrap{padding:20px 14px 48px}
 }
 @media (prefers-reduced-motion:reduce){.seg .fill{transition:none}}
@@ -132,12 +142,13 @@ button{font:inherit;color:inherit}
 <div class="wrap">
   <header>
     <h1>Quanah Dimensional Mission Tracker</h1>
-    <p class="sub">Track your Dimensional Missions and Grade on the Missions tab, and the Dimensional Skills you’re holding on the Skills tab.</p>
+    <p class="sub">Track your Dimensional Missions and Grade, the Dimensional Skills you’re holding, and your Mapae Module levels.</p>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Tracker sections">
     <button type="button" class="tab" role="tab" id="tab-missions" aria-controls="panel-missions" data-view="missions">Missions</button>
     <button type="button" class="tab" role="tab" id="tab-skills" aria-controls="panel-skills" data-view="skills">Skills</button>
+    <button type="button" class="tab" role="tab" id="tab-mapae" aria-controls="panel-mapae" data-view="mapae">Mapae Module</button>
   </nav>
 
   <div id="panel-missions" role="tabpanel" aria-labelledby="tab-missions">
@@ -145,8 +156,10 @@ button{font:inherit;color:inherit}
     <div class="score-row">
       <div class="grade"><small>Dimensional Grade</small><span id="gradeNum">1</span></div>
       <dl class="score-meta">
-        <dt>Mission Score</dt><dt>Missions done</dt><dt>Skill refreshes</dt>
-        <dd id="scoreTotal">0</dd><dd id="missionCount">0</dd><dd id="refreshes">10</dd>
+        <div><dt>Mission Score</dt><dd id="scoreTotal">0</dd></div>
+        <div><dt>Missions completed</dt><dd id="missionCount">0</dd></div>
+        <div><dt>Skill refreshes</dt><dd id="refreshes">10</dd></div>
+        <div><dt>Mapae points on death</dt><dd id="mapaeOnDeath">0</dd></div>
       </dl>
     </div>
     <div class="meter">
@@ -154,6 +167,7 @@ button{font:inherit;color:inherit}
       <div class="ticks" id="ticks"></div>
     </div>
     <p class="next-note" id="nextNote"></p>
+    <p class="next-note" id="mapaeNote"></p>
   </section>
 
   <div class="inputs">
@@ -200,7 +214,7 @@ button{font:inherit;color:inherit}
     <div class="chips" id="chipsSf"></div>
   </section>
 
-  <p class="foot">When you die, your Inspector Level and Battlesim progress reset, and the score from those round missions is lost. Only boss and Star Force missions are kept, plus any Dimensional Skills you chose with Skill Inheritance. “Log a death” resets the Inspector Level and floor to 0 and clears every skill not marked to keep, so the tracker matches your new run. Values come from the Nov 11, 2026 Quanah event notes. Your entries are saved in this browser only.</p>
+  <p class="foot">When you die, your Inspector Level and Battlesim progress reset, and the score from those round missions is lost. Only boss and Star Force missions are kept, plus any Dimensional Skills you chose with Skill Inheritance and your Mapae Module levels. “Log a death” resets the Inspector Level and floor to 0 and clears every skill not marked to keep, so the tracker matches your new run. Values come from the Nov 11, 2026 Quanah event notes. Your entries are saved in this browser only.</p>
   </div>
 
   <div id="panel-skills" role="tabpanel" aria-labelledby="tab-skills" hidden>
@@ -210,6 +224,15 @@ button{font:inherit;color:inherit}
     <div class="skills" id="skills"></div>
   </section>
 
+  </div>
+
+  <div id="panel-mapae" role="tabpanel" aria-labelledby="tab-mapae" hidden>
+  <section class="section" style="margin-top:20px">
+    <div class="sec-head"><h2>Mapae Module <span class="tag perm">Permanent</span></h2><span class="sec-sum" id="sumMapae"></span></div>
+    <p class="sub" style="margin:0 0 10px">Points you put into a module stay after you die. You earn 1 point for each Dimensional Mission you complete and spend them with SEN-D in the Emergency Escape Room; unspent points are lost when you leave the room.</p>
+    <p class="next-note" id="unspentNote" style="margin:0 0 12px"></p>
+    <div class="modules" id="modules"></div>
+  </section>
   </div>
 </div>
 
@@ -244,16 +267,25 @@ button{font:inherit;color:inherit}
   const ACUMEN_STATS=["STR","DEX","INT","LUK","All stats","Max HP","Attack Power","Magic ATT","Critical Rate","Critical Damage","Damage","Ignore Defense","Boss Damage","Buff Skill Duration","Chance to ignore damage when hit","Reduced MP consumption for all skills","HP recovery item and skill efficiency","Mesos Obtained","Item Drop Rate"];
   const ALL_SKILLS=ACTIVE_SKILLS.concat(PASSIVE_SKILLS);
   const blankSkill=()=>({name:"",stat:"",rank:"Normal",lvl:1,inherit:false});
+  const MODULES=[
+    {key:"power",name:"Power Module",per:"Active Skill Appearance Rate",ups:[[10,"Attack Power & Magic ATT +18%"],[20,"Critical Damage +12%"],[30,"Skill Cooldown −2 sec"]]},
+    {key:"survival",name:"Survival Module",per:"Passive Skill Appearance Rate",ups:[[10,"10% chance to ignore damage when attacked"],[20,"4% chance to become invincible for 7 sec when attacked"],[30,"10% chance to prevent HP from reaching 0"]]},
+    {key:"efficiency",name:"Efficiency Module",per:"damage to Normal Monsters",ups:[[10,"EXP Obtained +30%"],[20,"Mesos Obtained +30%"],[30,"Item Drop Rate +30%"]]}
+  ];
   const LIMITS={insp:[0,100],floor:[0,150],sf:[0,30],banked:[0,9999999]};
   const KEY="quanah-dim-tracker-v1";
   const fmt=n=>n.toLocaleString("en-US");
   const $=id=>document.getElementById(id);
 
-  let state={insp:0,floor:0,sf:0,bosses:{},skills:[]};
+  let state={mapae:{power:0,survival:0,efficiency:0},mapaePaid:{},mapaeUnspent:0,insp:0,floor:0,sf:0,bosses:{},skills:[]};
   try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&typeof s==="object")state=Object.assign(state,s,{bosses:s.bosses||{}});}catch(e){}
   if(!Array.isArray(state.skills))state.skills=[];
   state.skills=state.skills.slice(0,5).map(s=>{const b=blankSkill();if(!s||typeof s!=="object")return b;const o=Object.assign(b,s);delete o.type;if(!ALL_SKILLS.includes(o.name)){o.name="";o.inherit=false;}return o;});
   while(state.skills.length<5)state.skills.push(blankSkill());
+  if(!state.mapae||typeof state.mapae!=="object")state.mapae={};
+  if(!state.mapaePaid||typeof state.mapaePaid!=="object")state.mapaePaid={};
+  state.mapaeUnspent=Math.max(0,Math.round(+state.mapaeUnspent)||0);
+  MODULES.forEach(m=>{const v=+state.mapae[m.key];state.mapae[m.key]=isFinite(v)?Math.max(0,Math.min(99,Math.round(v))):0;});
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
   // Build meter
@@ -327,6 +359,36 @@ button{font:inherit;color:inherit}
     $("sumSkills").innerHTML="Inspector Lv. <b>"+state.insp+"</b>, <b>"+filled+"</b> of 5 slots used, <b>"+Math.floor(state.insp/5)+"</b> skill coupons this run, <b>"+used+"</b> of <b>"+avail+"</b> inheritance picks";
   }
 
+  // Mapae Module UI
+  const modWrap=$("modules"),modEls={};
+  MODULES.forEach(m=>{
+    const c=document.createElement("div");c.className="module";
+    c.innerHTML='<h3>'+m.name+'</h3>'
+      +'<div class="stepper"><button type="button" data-d="-1" aria-label="Lower '+m.name+' level">−</button><input type="number" inputmode="numeric" min="0" max="99" aria-label="'+m.name+' level"><button type="button" data-d="1" aria-label="Raise '+m.name+' level">+</button></div>'
+      +'<p class="eff"></p><ul class="ups"></ul>';
+    const inp=c.querySelector("input"),eff=c.querySelector(".eff"),ups=c.querySelector(".ups");
+    const set=v=>{v=Math.round(+v);if(!isFinite(v))v=0;v=Math.max(0,Math.min(99,v));
+      const up=v-state.mapae[m.key];if(up>0)state.mapaeUnspent=Math.max(0,state.mapaeUnspent-up);
+      state.mapae[m.key]=v;save();renderMapae();};
+    inp.addEventListener("input",()=>{if(inp.value!=="")set(inp.value);});
+    inp.addEventListener("change",()=>{set(inp.value||0);inp.value=state.mapae[m.key];});
+    c.querySelectorAll("button[data-d]").forEach(b=>b.addEventListener("click",()=>{set(state.mapae[m.key]+ +b.dataset.d);inp.value=state.mapae[m.key];}));
+    modWrap.appendChild(c);modEls[m.key]={inp,eff,ups};
+  });
+  function renderMapae(){
+    let total=0,unlocked=0;
+    MODULES.forEach(m=>{
+      const lv=state.mapae[m.key],e=modEls[m.key];total+=lv;
+      if(document.activeElement!==e.inp)e.inp.value=lv;
+      e.eff.innerHTML="Level <b>"+lv+"</b>: <b>+"+(lv*5)+"%</b> "+m.per+" (+5% per level)";
+      e.ups.innerHTML=m.ups.map(([at,txt])=>{const d=lv>=at;if(d)unlocked++;return '<li class="'+(d?"done":"")+'"><span class="lv">Lv. '+at+'</span><span>'+txt+'</span></li>';}).join("");
+    });
+    $("sumMapae").innerHTML="<b>"+fmt(total)+"</b> points allocated, <b>"+unlocked+"</b> of 9 upgrades unlocked";
+    $("unspentNote").innerHTML=state.mapaeUnspent>0
+      ? "You have <strong>"+state.mapaeUnspent+"</strong> point"+(state.mapaeUnspent===1?"":"s")+" from your last death to spend. Raising a module uses them up."
+      : "No unspent points. Log a death on the Missions tab to add the points you earned.";
+  }
+
   function chips(el,list,value,label){
     el.innerHTML="";let next=true;
     list.forEach(([m,p])=>{
@@ -340,11 +402,23 @@ button{font:inherit;color:inherit}
   function sumList(list,value){let s=0,n=0;list.forEach(([m,p])=>{if(value>=m){s+=p;n++;}});return [s,n];}
   const totalOf=l=>l.reduce((a,[,p])=>a+p,0);
 
+  function permKeys(){
+    const k=[];
+    BOSSES.forEach(([name,diffs])=>diffs.forEach(([d])=>{if(state.bosses[name+"|"+d])k.push("boss:"+name+"|"+d);}));
+    SF.forEach(([m])=>{if(state.sf>=m)k.push("sf:"+m);});
+    return k;
+  }
+  function deathPoints(){
+    const round=sumList(INSP,state.insp)[1]+sumList(FLOOR,state.floor)[1];
+    const fresh=permKeys().filter(k=>!state.mapaePaid[k]);
+    return {round,perm:fresh.length,fresh,total:round+fresh.length};
+  }
   function render(){
     ["insp","floor","sf"].forEach(k=>{const el=$(k);if(document.activeElement!==el)el.value=state[k];});
     const [si,ni]=sumList(INSP,state.insp),[sfl,nfl]=sumList(FLOOR,state.floor),[ss,ns]=sumList(SF,state.sf);
     let sb=0,nb=0,bt=0,bc=0;
     BOSSES.forEach(([name,diffs])=>diffs.forEach(([d,p])=>{bt+=p;bc++;if(state.bosses[name+"|"+d]){sb+=p;nb++;}}));
+    const dp=deathPoints();
     document.querySelectorAll(".diff").forEach(b=>b.setAttribute("aria-pressed",state.bosses[b.dataset.id]?"true":"false"));
 
     chips($("chipsInsp"),INSP,state.insp,m=>"Lv. "+m);
@@ -360,6 +434,10 @@ button{font:inherit;color:inherit}
     $("gradeNum").textContent=g[0];
     $("scoreTotal").textContent=fmt(total);
     $("missionCount").textContent=ni+nfl+ns+nb;
+    $("mapaeOnDeath").textContent=dp.total;
+    $("mapaeNote").innerHTML=dp.total>0
+      ? "If you die now you get <strong>"+dp.total+"</strong> Mapae Module point"+(dp.total===1?"":"s")+": "+dp.round+" from this run’s round missions and "+dp.perm+" from new boss and Star Force missions."
+      : "If you die now you won’t get any Mapae Module points. Complete a mission first.";
     $("refreshes").textContent=g[2];
     track.querySelectorAll(".seg").forEach(seg=>{
       const lo=+seg.dataset.lo,hi=+seg.dataset.hi;
@@ -370,6 +448,7 @@ button{font:inherit;color:inherit}
       ? "<strong>"+fmt(nextG[1]-total)+"</strong> more points to Grade "+nextG[0]+" ("+nextG[2]+" skill refreshes)."
       : "You’ve reached Grade 5, the highest Dimensional Grade.";
     renderSkills();
+    renderMapae();
   }
 
   function setVal(k,v){
@@ -389,18 +468,19 @@ button{font:inherit;color:inherit}
   function say(t){msg.textContent=t;clearTimeout(msgT);msgT=setTimeout(()=>msg.textContent="",4000);}
   $("logDeath").addEventListener("click",()=>{
     const r=sumList(INSP,state.insp)[0]+sumList(FLOOR,state.floor)[0];
+    const dp=deathPoints();dp.fresh.forEach(k=>state.mapaePaid[k]=true);state.mapaeUnspent=dp.total;
     let kept=0;
     state.skills=state.skills.map(s=>{if(s.inherit&&s.name.trim()){kept++;return Object.assign({},s,{inherit:false});}return blankSkill();});
     state.insp=0;state.floor=0;save();render();
-    say("Inspector Level and Battlesim floor reset. "+fmt(r)+" round points lost. "+kept+" inherited skill"+(kept===1?"":"s")+" kept.");
+    say("Inspector Level and Battlesim floor reset. "+fmt(r)+" round points lost. "+kept+" inherited skill"+(kept===1?"":"s")+" kept. "+dp.total+" Mapae point"+(dp.total===1?"":"s")+" to spend on the Mapae Module tab.");
   });
   $("resetAll").addEventListener("click",()=>{
-    if(!confirm("Clear your skills, Inspector Level, Battlesim floor, Star Force and all boss clears?"))return;
-    state={insp:0,floor:0,sf:0,bosses:{},skills:[0,1,2,3,4].map(blankSkill)};save();render();say("Tracker cleared.");
+    if(!confirm("Clear your skills, Mapae Module levels, Inspector Level, Battlesim floor, Star Force and all boss clears?"))return;
+    state={mapae:{power:0,survival:0,efficiency:0},mapaePaid:{},mapaeUnspent:0,insp:0,floor:0,sf:0,bosses:{},skills:[0,1,2,3,4].map(blankSkill)};save();render();say("Tracker cleared.");
   });
 
   // Tabs (#missions / #skills)
-  const VIEWS=["missions","skills"];
+  const VIEWS=["missions","skills","mapae"];
   function showView(){
     const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"missions";
     VIEWS.forEach(x=>{
